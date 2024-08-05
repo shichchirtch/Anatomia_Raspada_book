@@ -15,6 +15,7 @@ from aiogram.fsm.context import FSMContext
 from inline_keyboard import *
 from postgres_functions import *
 from FSM import FSM_ST
+from contextlib import suppress
 
 
 
@@ -70,7 +71,7 @@ async def process_help_command(message: Message):
     await att.delete()
 
 @ch_router.message(Command(commands='exit'))
-async def process_command_exit(message: Message, state: FSMContext):
+async def process_command_exit(message: Message):
     print('exit works\n ')
     user_id = message.from_user.id
     await reset_page(user_id)
@@ -91,9 +92,11 @@ async def process_command_exit(message: Message, state: FSMContext):
 
         except TelegramBadRequest:
             print('////Into EXIT Exeption')
-            return_to_message = Message(**json.loads(pic_msg))
-            msg = Message.model_validate(return_to_message).as_(bot)
-            await msg.delete()
+            with suppress(TelegramBadRequest):
+                print('PATCH 1 WORKS\n\n')
+                return_to_message = Message(**json.loads(pic_msg))
+                msg = Message.model_validate(return_to_message).as_(bot)
+                await msg.delete()
             att = await message.answer_photo(two_site, caption=soderganie_full, reply_markup=oglav_kb)
             js_f_atw = att.model_dump_json(exclude_none=True)
             await insert_new_jsmess_in_pic_msg(user_id, js_f_atw)
@@ -151,41 +154,4 @@ async def process_command_back(message: Message, state: FSMContext):
         await insert_new_jsmess_in_pic_msg(user_id, json_att)
 
     await message.delete()
-
-
-
-
-
-
-
-# @ch_router.message(Command(commands='otzyv'), ~StateFilter(FSM_NAMES.waiting))
-# async def process_command_otzyv(message: Message, state: FSMContext):
-#     print("**************************************")
-#     language = users_db[message.from_user.id]['language']
-#     await state.set_state(FSM_NAMES.otzyv)
-#     att = await message.answer(text_for_send_refferal[language])
-#     await message.delete()
-#     await asyncio.sleep(12)
-#     await att.delete()
-#
-# @ch_router.message(StateFilter(FSM_NAMES.otzyv))
-# async def process_send_otzyv(message: Message, state: FSMContext):
-#     print('feed_back sending\n ')
-#     await state.set_state(FSM_NAMES.waiting)
-#     language = users_db[message.from_user.id]['language']
-#     sending_data = message.text
-#     user_id = message.from_user.id
-#     user_name = message.from_user.first_name
-#     join_text = f'User_id {user_id}, user_name  {user_name} \n\nsend MESSAGE \n\n{sending_data}'
-#     await message.bot.send_message(chat_id=-4241930933, text=join_text)
-#     await asyncio.sleep(1)
-#     await message.delete()
-#     att = await message.answer(success_send[language])
-#     await asyncio.sleep(3)
-#     await att.delete()
-#     wait_att = await message.answer(waiting_15[language])
-#     await asyncio.sleep(3)
-#     await  asyncio.sleep(900)
-#     await wait_att.delete()
-#     await state.set_state(FSM_NAMES.base_part)
 
